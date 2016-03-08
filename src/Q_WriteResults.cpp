@@ -661,7 +661,14 @@ int writePlainShiftedExtendedReadsAndQfragsToBED(std::vector<Chromosome> &chromo
 	}
 	
 	// Get read length from first alignment in ChIP BAM file
-	seqan::BamStream bamStreamInChIP(toCString(options.chip_sample));
+
+	// Get read length from first alignment in ChIP BAM file
+    seqan::BamFileIn bamStreamInChIP;
+    if(!open(bamStreamInChIP, toCString(options.chip_sample)))
+    {
+        std::cerr << "ERROR: Could not open " << options.chip_sample << " !\n";
+        return 1;
+    }
 	seqan::BamAlignmentRecord record;
 	readRecord(record, bamStreamInChIP);
 	int rl=length(record.seq);

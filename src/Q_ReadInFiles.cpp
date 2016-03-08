@@ -46,231 +46,232 @@ bool compareHitsByPos(const Hit& a, const Hit& b)
  */
 int ReadAlignmentFile(std::vector<Chromosome> &chromosome, int &chr_num, seqan::CharString chip_sample, seqan::CharString control_sample, bool keep_dup, int thread_num, bool use_pseudo_control)
 {
-	// Open input stream, BamStream can read SAM and BAM files
-    seqan::BamStream bamStreamInChIP(toCString(chip_sample));
-    if(!isGood(bamStreamInChIP))
+    // Open input BamFileIn, BamFileIn can read SAM and BAM files
+
+    seqan::BamFileIn bamStreamInChIP;
+    if(!open(bamStreamInChIP, toCString(chip_sample)))
     {
         std::cerr << "ERROR: Could not open " << chip_sample << " !\n";
         return 1;
     }
 
-	// create chromosome objects
-	chr_num=length(bamStreamInChIP.header.sequenceInfos);
+    // create chromosome objects
+    seqan::BamHeader header;
+    seqan::readHeader(header, bamStreamInChIP);
+    seqan::StringSet<seqan::CharString> chr_names = contigNames(context(bamStreamInChIP));
+    seqan::String<int> chr_lengths = contigLengths(context(bamStreamInChIP));
+    chr_num=length(chr_names);
 
-	// maps chip-chromosome name to chip-rID
-	boost::unordered_map <std::string, int> chr_map_aux;
-	// maps control-chromosome rID to chip-chromosome rID
-	boost::unordered_map <int, int> chr_map;
+    // maps chip-chromosome name to chip-rID
+    boost::unordered_map <std::string, int> chr_map_aux;
+    // maps control-chromosome rID to chip-chromosome rID
+    boost::unordered_map <int, int> chr_map;
 
-	for(int i=0;i<chr_num;i++)
-	{
-		Chromosome c;
-		c.name=bamStreamInChIP.header.sequenceInfos[i].i1;
-		c.len=bamStreamInChIP.header.sequenceInfos[i].i2;
-		c.hit_num_chip=0;
-		chromosome.push_back(c);
-		chr_map_aux[toCString(c.name)]=i;
-	}
+    for(int i=0;i<chr_num;++i)
+    {
+        Chromosome c;
+        c.name=chr_names[i];
+        c.len=chr_lengths[i];
+        c.hit_num_chip=0;
+        chromosome.push_back(c);
+        chr_map_aux[toCString(c.name)]=i;
+    }
 
-	// read chip hits to chromosome objects
-	seqan::BamAlignmentRecord record;
-	while(!atEnd(bamStreamInChIP))
-	{
-		// get the read length from the first alignment record
-		if(chromosome[record.rID].read_len_chip==-1)
-		{
-			chromosome[record.rID].read_len_chip=length(record.seq);
-		}
-	
-	
-		if (readRecord(record, bamStreamInChIP) != 0)
+    // read chip hits to chromosome objects
+    seqan::BamAlignmentRecord record;
+    while(!atEnd(bamStreamInChIP))
+    {
+        // get the read length from the first alignment record
+        if(chromosome[record.rID].read_len_chip==-1)
         {
-            std::cerr << "ERROR: Could not read record!\n";
+            chromosome[record.rID].read_len_chip=length(record.seq);
+        }
+      
+        readRecord(record, bamStreamInChIP);
+
+        Hit hit;
+        if(record.flag==16||record.flag==147||record.flag==83||record.flag==121||record.flag==153||record.flag==185||record.flag==115||record.flag==179||record.flag==81||record.flag==145||record.flag==113||record.flag==177)
+        {
+            hit.pos=record.beginPos+length(record.seq)-1;
+            hit.strand=1;
+            hit.read_length=length(record.seq);
+            chromosome[record.rID].CHIP_HITS.push_back(hit);
+            chromosome[record.rID].hit_num_chip++;
+            chromosome[record.rID].r_hit_num_chip++;
+        }
+        if(record.flag==0||record.flag==99||record.flag==163||record.flag==73||record.flag==89||record.flag==137||record.flag==131||record.flag==97||record.flag==161||record.flag==67||record.flag==65||record.flag==129)
+        {
+            hit.pos=record.beginPos;
+            hit.strand=0;
+            hit.read_length=length(record.seq);
+            chromosome[record.rID].CHIP_HITS.push_back(hit);
+            chromosome[record.rID].hit_num_chip++;
+            chromosome[record.rID].f_hit_num_chip++;            
+        }
+        
+        if(chromosome[record.rID].read_len_chip<(int)length(record.seq))
+        {
+            chromosome[record.rID].read_len_chip=length(record.seq);
+        }
+    }
+
+
+    // If there is a control,
+    if(control_sample != "None")
+    {
+        // open an input stream for the control
+        seqan::BamFileIn bamStreamInControl;
+        if(!open(bamStreamInControl, toCString(chip_sample)))
+        {
+            std::cerr << "ERROR: Could not open " << control_sample << " !\n";
             return 1;
         }
 
-		Hit hit;
-		if(record.flag==16||record.flag==147||record.flag==83||record.flag==121||record.flag==153||record.flag==185||record.flag==115||record.flag==179||record.flag==81||record.flag==145||record.flag==113||record.flag==177)
-		{
-			hit.pos=record.beginPos+length(record.seq)-1;
-			hit.strand=1;
-			hit.read_length=length(record.seq);
-		    chromosome[record.rID].CHIP_HITS.push_back(hit);
-		    chromosome[record.rID].hit_num_chip++;
-		    chromosome[record.rID].r_hit_num_chip++;
-		}
-		if(record.flag==0||record.flag==99||record.flag==163||record.flag==73||record.flag==89||record.flag==137||record.flag==131||record.flag==97||record.flag==161||record.flag==67||record.flag==65||record.flag==129)
-		{
-			hit.pos=record.beginPos;
-			hit.strand=0;
-			hit.read_length=length(record.seq);
-			chromosome[record.rID].CHIP_HITS.push_back(hit);
-		    chromosome[record.rID].hit_num_chip++;
-		    chromosome[record.rID].f_hit_num_chip++;		    
-		}
-		
-		if(chromosome[record.rID].read_len_chip<(int)length(record.seq))
-		{
-			chromosome[record.rID].read_len_chip=length(record.seq);
-		}
-	}
+        
+        // iterate over control chromosomes
+        seqan::BamHeader header;
+        seqan::readHeader(header, bamStreamInControl);
+        seqan::StringSet<seqan::CharString> chr_names_ctrl = contigNames(context(bamStreamInControl));
 
+        int chr_num_ctrl=length(chr_names_ctrl);
+        for(int i=0;i<chr_num_ctrl;i++)
+        {
+            seqan::CharString name = chr_names_ctrl[i];
+            // the chromosome 'name' has also hits for chip
+            if(chr_map_aux.find(toCString(name)) != chr_map_aux.end())
+            {
+                chr_map[i] = chr_map_aux[toCString(name)];
+            }
+            else
+            // the chromosome 'name' has no hits for chip
+            {
+                chr_map[i] = -1;
+            }
+        }
+        
+        seqan::BamAlignmentRecord record;
+        while(!atEnd(bamStreamInControl))
+        {
+            readRecord(record, bamStreamInControl);
+                       
+            // if for the corresponding chromosome there is no hit for the ChIP sample
+            if(chr_map[record.rID] == -1){continue;};
+            //std::cout << record.rID << "\t" << chr_map[record.rID] << "\n";
 
-	// If there is a control,
-    if(control_sample != "None")
-    {
-		// open an input stream for the control
-		seqan::BamStream bamStreamInControl(toCString(control_sample));
-		if(!isGood(bamStreamInControl))
-		{
-			std::cerr << "ERROR: Could not open " << control_sample << " !\n";
-			return 1;
-		}
-		
-		// iterate over control chromosomes
-		int chr_num_ctrl=length(bamStreamInControl.header.sequenceInfos);
-		for(int i=0;i<chr_num_ctrl;i++)
-		{
-			seqan::CharString name = bamStreamInControl.header.sequenceInfos[i].i1;
-			// the chromosome 'name' has also hits for chip
-			if(chr_map_aux.find(toCString(name)) != chr_map_aux.end())
-			{
-				chr_map[i] = chr_map_aux[toCString(name)];
-			}
-			else
-			// the chromosome 'name' has no hits for chip
-			{
-				chr_map[i] = -1;
-			}
-		}
-		
-		seqan::BamAlignmentRecord record;
-		while(!atEnd(bamStreamInControl))
-		{
-			if (readRecord(record, bamStreamInControl) != 0)
-			{
-				std::cerr << "ERROR: Could not read record!\n";
-				return 1;
-			}
-			
-			// if for the corresponding chromosome there is no hit for the ChIP sample
-			if(chr_map[record.rID] == -1){continue;};
-			//std::cout << record.rID << "\t" << chr_map[record.rID] << "\n";
-
-			Hit hit;
-			if(record.flag==16||record.flag==147||record.flag==83||record.flag==121||record.flag==153||record.flag==185||record.flag==115||record.flag==179||record.flag==81||record.flag==145||record.flag==113||record.flag==177)
-			{
-				hit.pos=record.beginPos+length(record.seq)-1;
-				hit.strand=1;
-				hit.read_length=length(record.seq);
-				chromosome[chr_map[record.rID]].CTRL_HITS.push_back(hit);
-				chromosome[chr_map[record.rID]].hit_num_ctrl++;
-				chromosome[chr_map[record.rID]].r_hit_num_ctrl++;
-			}
-			if(record.flag==0||record.flag==99||record.flag==163||record.flag==73||record.flag==89||record.flag==137||record.flag==131||record.flag==97||record.flag==161||record.flag==67||record.flag==65||record.flag==129)
-			{
-				hit.pos=record.beginPos;
-				hit.strand=0;
-				hit.read_length=length(record.seq);
-				chromosome[chr_map[record.rID]].CTRL_HITS.push_back(hit);
-				chromosome[chr_map[record.rID]].hit_num_ctrl++;
-				chromosome[chr_map[record.rID]].f_hit_num_ctrl++;		    
-			}
-		}
+            Hit hit;
+            if(record.flag==16||record.flag==147||record.flag==83||record.flag==121||record.flag==153||record.flag==185||record.flag==115||record.flag==179||record.flag==81||record.flag==145||record.flag==113||record.flag==177)
+            {
+                hit.pos=record.beginPos+length(record.seq)-1;
+                hit.strand=1;
+                hit.read_length=length(record.seq);
+                chromosome[chr_map[record.rID]].CTRL_HITS.push_back(hit);
+                chromosome[chr_map[record.rID]].hit_num_ctrl++;
+                chromosome[chr_map[record.rID]].r_hit_num_ctrl++;
+            }
+            if(record.flag==0||record.flag==99||record.flag==163||record.flag==73||record.flag==89||record.flag==137||record.flag==131||record.flag==97||record.flag==161||record.flag==67||record.flag==65||record.flag==129)
+            {
+                hit.pos=record.beginPos;
+                hit.strand=0;
+                hit.read_length=length(record.seq);
+                chromosome[chr_map[record.rID]].CTRL_HITS.push_back(hit);
+                chromosome[chr_map[record.rID]].hit_num_ctrl++;
+                chromosome[chr_map[record.rID]].f_hit_num_ctrl++;           
+            }
+        }
     }
   
-	// pseudo control
-	if(use_pseudo_control)
-	{
-		for(int i=0;i<chr_num;i++)
-		{
-			chromosome[i].CTRL_HITS=getPseudoControlSwitchStrandAndFlip(chromosome[i].CHIP_HITS,chromosome[i].read_len_chip,chromosome[i].len);
-			chromosome[i].hit_num_ctrl=chromosome[i].hit_num_chip;
-			chromosome[i].f_hit_num_ctrl=chromosome[i].f_hit_num_chip;
-			chromosome[i].r_hit_num_ctrl=chromosome[i].r_hit_num_chip;
-		}
-	}
+    // pseudo control
+    if(use_pseudo_control)
+    {
+        for(int i=0;i<chr_num;i++)
+        {
+            chromosome[i].CTRL_HITS=getPseudoControlSwitchStrandAndFlip(chromosome[i].CHIP_HITS,chromosome[i].read_len_chip,chromosome[i].len);
+            chromosome[i].hit_num_ctrl=chromosome[i].hit_num_chip;
+            chromosome[i].f_hit_num_ctrl=chromosome[i].f_hit_num_chip;
+            chromosome[i].r_hit_num_ctrl=chromosome[i].r_hit_num_chip;
+        }
+    }
 
-	
-	// sort hits according to starting position
-	SEQAN_OMP_PRAGMA(parallel for num_threads(thread_num))
-	for(int i=0;i<chr_num;i++)
-	{
-		sort(chromosome[i].CHIP_HITS.begin(),chromosome[i].CHIP_HITS.end(),compareHitsByPos);
-		sort(chromosome[i].CTRL_HITS.begin(),chromosome[i].CTRL_HITS.end(),compareHitsByPos);
-	}
+    
+    // sort hits according to starting position
+    SEQAN_OMP_PRAGMA(parallel for num_threads(thread_num))
+    for(int i=0;i<chr_num;i++)
+    {
+        sort(chromosome[i].CHIP_HITS.begin(),chromosome[i].CHIP_HITS.end(),compareHitsByPos);
+        sort(chromosome[i].CTRL_HITS.begin(),chromosome[i].CTRL_HITS.end(),compareHitsByPos);
+    }
 
-	if(keep_dup)
-	{
-		SEQAN_OMP_PRAGMA(parallel for num_threads(thread_num))
-		for(int i=0;i<chr_num;i++)
-		{
-			chromosome[i].redundant_hits_num_chip=RemoveRedundantHits(chromosome[i].CHIP_HITS,true);
-			
-			if(control_sample != "None")
-			{
-				if(chromosome[i].CTRL_HITS.size()==0){continue;}
-				chromosome[i].redundant_hits_num_ctrl=RemoveRedundantHits(chromosome[i].CTRL_HITS,true);
-			}
-		}
-		return 0;
-	}
-	
-	// if not keep-dup: remove redundant hits
-	// --------------------------------------
-	
-	SEQAN_OMP_PRAGMA(parallel for num_threads(thread_num))
-	for(int i=0;i<chr_num;i++)
-	{
-		chromosome[i].redundant_hits_removed_num_chip=RemoveRedundantHits(chromosome[i].CHIP_HITS,false);
-		chromosome[i].redundant_hits_num_chip=chromosome[i].redundant_hits_removed_num_chip;
-		
-		// re-determine f_hit_num_chip
-		chromosome[i].f_hit_num_chip=0;
-		chromosome[i].r_hit_num_chip=0;
-		for(unsigned int j=0;j<chromosome[i].CHIP_HITS.size();j++)
-		{
-			if(chromosome[i].CHIP_HITS[j].strand)
-			{
-				chromosome[i].f_hit_num_chip++;
-			}
-			else
-			{
-				chromosome[i].r_hit_num_chip++;
-			}
-		}
-		chromosome[i].hit_num_chip=chromosome[i].f_hit_num_chip+chromosome[i].r_hit_num_chip;
-	}
+    if(keep_dup)
+    {
+        SEQAN_OMP_PRAGMA(parallel for num_threads(thread_num))
+        for(int i=0;i<chr_num;i++)
+        {
+            chromosome[i].redundant_hits_num_chip=RemoveRedundantHits(chromosome[i].CHIP_HITS,true);
+            
+            if(control_sample != "None")
+            {
+                if(chromosome[i].CTRL_HITS.size()==0){continue;}
+                chromosome[i].redundant_hits_num_ctrl=RemoveRedundantHits(chromosome[i].CTRL_HITS,true);
+            }
+        }
+        return 0;
+    }
+    
+    // if not keep-dup: remove redundant hits
+    // --------------------------------------
+    
+    SEQAN_OMP_PRAGMA(parallel for num_threads(thread_num))
+    for(int i=0;i<chr_num;i++)
+    {
+        chromosome[i].redundant_hits_removed_num_chip=RemoveRedundantHits(chromosome[i].CHIP_HITS,false);
+        chromosome[i].redundant_hits_num_chip=chromosome[i].redundant_hits_removed_num_chip;
+        
+        // re-determine f_hit_num_chip
+        chromosome[i].f_hit_num_chip=0;
+        chromosome[i].r_hit_num_chip=0;
+        for(unsigned int j=0;j<chromosome[i].CHIP_HITS.size();j++)
+        {
+            if(chromosome[i].CHIP_HITS[j].strand)
+            {
+                chromosome[i].f_hit_num_chip++;
+            }
+            else
+            {
+                chromosome[i].r_hit_num_chip++;
+            }
+        }
+        chromosome[i].hit_num_chip=chromosome[i].f_hit_num_chip+chromosome[i].r_hit_num_chip;
+    }
 
     if(control_sample != "None")
     {
-		SEQAN_OMP_PRAGMA(parallel for num_threads(thread_num))
-		for(int i=0;i<chr_num;i++)
-		{
-			// if there are hits for chip but not for control
-			if(chromosome[i].CTRL_HITS.size()==0){continue;}
+        SEQAN_OMP_PRAGMA(parallel for num_threads(thread_num))
+        for(int i=0;i<chr_num;i++)
+        {
+            // if there are hits for chip but not for control
+            if(chromosome[i].CTRL_HITS.size()==0){continue;}
 
-			chromosome[i].redundant_hits_removed_num_ctrl=RemoveRedundantHits(chromosome[i].CTRL_HITS,false);
-			chromosome[i].redundant_hits_num_ctrl=chromosome[i].redundant_hits_removed_num_ctrl;
-			
-			// re-determine f_hit_num_chip
-			chromosome[i].f_hit_num_ctrl=0;
-			chromosome[i].r_hit_num_ctrl=0;
-			for(unsigned int j=0;j<chromosome[i].CTRL_HITS.size();j++)
-			{
-				if(chromosome[i].CTRL_HITS[j].strand)
-				{
-					chromosome[i].f_hit_num_ctrl++;
-				}
-				else
-				{
-					chromosome[i].r_hit_num_ctrl++;
-				}
-			}
-			chromosome[i].hit_num_ctrl=chromosome[i].f_hit_num_ctrl+chromosome[i].r_hit_num_ctrl;
-		}	
-	}
-	
+            chromosome[i].redundant_hits_removed_num_ctrl=RemoveRedundantHits(chromosome[i].CTRL_HITS,false);
+            chromosome[i].redundant_hits_num_ctrl=chromosome[i].redundant_hits_removed_num_ctrl;
+            
+            // re-determine f_hit_num_chip
+            chromosome[i].f_hit_num_ctrl=0;
+            chromosome[i].r_hit_num_ctrl=0;
+            for(unsigned int j=0;j<chromosome[i].CTRL_HITS.size();j++)
+            {
+                if(chromosome[i].CTRL_HITS[j].strand)
+                {
+                    chromosome[i].f_hit_num_ctrl++;
+                }
+                else
+                {
+                    chromosome[i].r_hit_num_ctrl++;
+                }
+            }
+            chromosome[i].hit_num_ctrl=chromosome[i].f_hit_num_ctrl+chromosome[i].r_hit_num_ctrl;
+        }   
+    }
+    
     return 0;
 }
 
@@ -285,50 +286,50 @@ int ReadAlignmentFile(std::vector<Chromosome> &chromosome, int &chr_num, seqan::
  */
 int RemoveRedundantHits(std::vector<Hit> &HITS, bool keep)
 {
-	std::vector<Hit> HITS_RMDUP;
-	
-	// if the chromosome object has no hits
-	if(HITS.size()==0)
-	{
-		HITS=HITS_RMDUP;
-		return 0;
-	}
-	
-	int seen_strands;
-	int cur_pos=HITS[0].pos;
-	HITS_RMDUP.push_back(HITS[0]);
-	if(HITS[0].strand==true){seen_strands=0;}else{seen_strands=1;}
-	
-	for(unsigned int j=1;j<HITS.size();j++)
-	{
-		if(cur_pos!=HITS[j].pos)
-		{
-			cur_pos=HITS[j].pos;
-			if(HITS[j].strand==true){seen_strands=0;}else{seen_strands=1;}
-			HITS_RMDUP.push_back(HITS[j]);
-		}
-		else
-		{
-			// only f strand has been seen AND hit is on r strand
-			if(seen_strands==0 && !HITS[j].strand)
-			{
-				HITS_RMDUP.push_back(HITS[j]);
-				seen_strands=2;
-			}
-			// only r strand has been seen AND hit is on f strand
-			else if(seen_strands==1 && HITS[j].strand)
-			{
-				HITS_RMDUP.push_back(HITS[j]);
-				seen_strands=2;
-			}		
-		}	
-	}
-	int redundant_hits=HITS.size()-HITS_RMDUP.size();
-	if(!keep)
-	{
-		HITS=HITS_RMDUP;
-	}
-	return redundant_hits;
+    std::vector<Hit> HITS_RMDUP;
+    
+    // if the chromosome object has no hits
+    if(HITS.size()==0)
+    {
+        HITS=HITS_RMDUP;
+        return 0;
+    }
+    
+    int seen_strands;
+    int cur_pos=HITS[0].pos;
+    HITS_RMDUP.push_back(HITS[0]);
+    if(HITS[0].strand==true){seen_strands=0;}else{seen_strands=1;}
+    
+    for(unsigned int j=1;j<HITS.size();j++)
+    {
+        if(cur_pos!=HITS[j].pos)
+        {
+            cur_pos=HITS[j].pos;
+            if(HITS[j].strand==true){seen_strands=0;}else{seen_strands=1;}
+            HITS_RMDUP.push_back(HITS[j]);
+        }
+        else
+        {
+            // only f strand has been seen AND hit is on r strand
+            if(seen_strands==0 && !HITS[j].strand)
+            {
+                HITS_RMDUP.push_back(HITS[j]);
+                seen_strands=2;
+            }
+            // only r strand has been seen AND hit is on f strand
+            else if(seen_strands==1 && HITS[j].strand)
+            {
+                HITS_RMDUP.push_back(HITS[j]);
+                seen_strands=2;
+            }       
+        }   
+    }
+    int redundant_hits=HITS.size()-HITS_RMDUP.size();
+    if(!keep)
+    {
+        HITS=HITS_RMDUP;
+    }
+    return redundant_hits;
 }
 
 
@@ -356,71 +357,71 @@ int RemoveRedundantHits(std::vector<Hit> &HITS, bool keep)
  */
 int ReadBedFile(std::vector<Chromosome> &chromosome, seqan::CharString bed_hit_dist)
 {
-	std::map<std::string, std::vector<int> > Summits;
-	std::ifstream fin;
-	char* file_name = toCString(bed_hit_dist);
-	fin.open(file_name);
-	std::string line,name;
-	int sta, end;
-	while(!fin.eof())
-	{
-		getline(fin, line);
-		if(line=="") break;
-		std::istringstream tokens(line);
-		tokens >> name;
-		tokens >> sta;
-		tokens >> end;
-		Summits[name].push_back(sta+((end-sta)/2));
-	}
-	fin.close();
-	
-	// sort summit vectors by position
-	typedef std::map<std::string, std::vector<int> >::iterator it_type;
-	for(it_type iterator = Summits.begin(); iterator != Summits.end(); iterator++)
-	{
-		sort(Summits[iterator->first].begin(),Summits[iterator->first].end());
-	}
-	
-	// Add summits to chromosomes
-	for(unsigned int i=0;i<chromosome.size();i++)
-	{
-		std::vector<Summit> NewSummits;
-		for(unsigned int j=0;j<Summits[toCString(chromosome[i].name)].size();j++)
-		{
-			Summit s;
-			s.pos=Summits[toCString(chromosome[i].name)][j];
-			NewSummits.push_back(s);
-			chromosome[i].sum_num++;
-		}
-		chromosome[i].SUMMITS=NewSummits;
-	}
-	
-	
-	
-	// get anchor hits for summits
-	for(unsigned int i=0;i<chromosome.size();i++)
-	{
-		int c_hit=0; // ChIP sample
-		for(int j=0;j<chromosome[i].sum_num;j++)
-		{
-			while(chromosome[i].CHIP_HITS[c_hit].pos<chromosome[i].SUMMITS[j].pos)
-			{
-				c_hit++;
-			}
-			chromosome[i].SUMMITS[j].anchor_hit_chip=c_hit;
-		}
-		
-		if(chromosome[i].hit_num_ctrl==0){continue;}
-		
-		c_hit=0; // Control sample
-		for(int j=0;j<chromosome[i].sum_num;j++)
-		{
-			while(chromosome[i].CTRL_HITS[c_hit].pos<chromosome[i].SUMMITS[j].pos)
-			{
-				c_hit++;
-			}
-			chromosome[i].SUMMITS[j].anchor_hit_ctrl=c_hit;
-		}
-	}
-	return 0;	
+    std::map<std::string, std::vector<int> > Summits;
+    std::ifstream fin;
+    char* file_name = toCString(bed_hit_dist);
+    fin.open(file_name);
+    std::string line,name;
+    int sta, end;
+    while(!fin.eof())
+    {
+        getline(fin, line);
+        if(line=="") break;
+        std::istringstream tokens(line);
+        tokens >> name;
+        tokens >> sta;
+        tokens >> end;
+        Summits[name].push_back(sta+((end-sta)/2));
+    }
+    fin.close();
+    
+    // sort summit vectors by position
+    typedef std::map<std::string, std::vector<int> >::iterator it_type;
+    for(it_type iterator = Summits.begin(); iterator != Summits.end(); iterator++)
+    {
+        sort(Summits[iterator->first].begin(),Summits[iterator->first].end());
+    }
+    
+    // Add summits to chromosomes
+    for(unsigned int i=0;i<chromosome.size();i++)
+    {
+        std::vector<Summit> NewSummits;
+        for(unsigned int j=0;j<Summits[toCString(chromosome[i].name)].size();j++)
+        {
+            Summit s;
+            s.pos=Summits[toCString(chromosome[i].name)][j];
+            NewSummits.push_back(s);
+            chromosome[i].sum_num++;
+        }
+        chromosome[i].SUMMITS=NewSummits;
+    }
+    
+    
+    
+    // get anchor hits for summits
+    for(unsigned int i=0;i<chromosome.size();i++)
+    {
+        int c_hit=0; // ChIP sample
+        for(int j=0;j<chromosome[i].sum_num;j++)
+        {
+            while(chromosome[i].CHIP_HITS[c_hit].pos<chromosome[i].SUMMITS[j].pos)
+            {
+                c_hit++;
+            }
+            chromosome[i].SUMMITS[j].anchor_hit_chip=c_hit;
+        }
+        
+        if(chromosome[i].hit_num_ctrl==0){continue;}
+        
+        c_hit=0; // Control sample
+        for(int j=0;j<chromosome[i].sum_num;j++)
+        {
+            while(chromosome[i].CTRL_HITS[c_hit].pos<chromosome[i].SUMMITS[j].pos)
+            {
+                c_hit++;
+            }
+            chromosome[i].SUMMITS[j].anchor_hit_ctrl=c_hit;
+        }
+    }
+    return 0;   
 }

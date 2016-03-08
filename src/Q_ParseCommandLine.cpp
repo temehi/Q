@@ -35,13 +35,13 @@ seqan::ArgumentParser::ParseResult parseCommandLine(Options &options, int argc, 
 	
 	addOption(parser, seqan::ArgParseOption(
 		"t", "treatment-sample", "Input file (REQUIRED).",
-		seqan::ArgParseArgument::INPUTFILE, "IN"));
+		seqan::ArgParseArgument::INPUT_FILE, "IN"));
 	setRequired(parser, "t");
 	//setValidValues(parser, "treatment-sample", "sam bam");
 
 	addOption(parser, seqan::ArgParseOption(
 		"c", "control-sample", "Input file.",
-		seqan::ArgParseArgument::INPUTFILE, "IN"));
+		seqan::ArgParseArgument::INPUT_FILE, "IN"));
 	//setValidValues(parser, "control-sample", "sam bam");
 
 	addOption(parser, seqan::ArgParseOption(
@@ -74,7 +74,7 @@ seqan::ArgumentParser::ParseResult parseCommandLine(Options &options, int argc, 
 
 	addOption(parser, seqan::ArgParseOption(
 		"o", "out-prefix", "Prefix for all output files.",
-		seqan::ArgParseArgument::STRING, "STRING"));
+		seqan::ArgParseOption::OUTPUT_PREFIX, "STRING"));
 	setDefaultValue(parser, "o", "OUT");		
 	
 	addOption(parser, seqan::ArgParseOption(
@@ -114,7 +114,7 @@ seqan::ArgumentParser::ParseResult parseCommandLine(Options &options, int argc, 
 
 	addOption(parser, seqan::ArgParseOption(
 		"b", "bed-hit-dist", "Input BED file containing summits. Summit position is always the center of a given region. Chromosome IDs in BED file must be consistent with IDs in SAM/BAM file. Default radius around summits is 1000. The radius can be changed via the -r option. Distribution of hits around summits on forward and reverse strand will be written to a text file. Output is a tab separated table containing three columns and 2 times radius rows. The first column contains the relative positions to the summits. The second and third column contain the accumulated counts of hits for all summits in the BED file. Second column for forward and third column for reverse strand. Peak calling will be skipped.",
-		seqan::ArgParseArgument::INPUTFILE, "IN"));
+		seqan::ArgParseArgument::INPUT_FILE, "IN"));
 
 	addOption(parser, seqan::ArgParseOption(
 		"r", "bed-radius", "Radius around summits for counting hits (-b).",
