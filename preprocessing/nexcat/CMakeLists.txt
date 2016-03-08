@@ -138,7 +138,7 @@ set (SEQAN_CTD_EXECUTABLES ${SEQAN_CTD_EXECUTABLES} nexcat CACHE INTERNAL "")
 
 if (SEQAN_BUILD_SYSTEM STREQUAL "APP:nexcat")
   set (CPACK_PACKAGE_NAME "nexcat")
-  set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "nexcat - a fast saturation-based ChIP-seq peak caller.")
+  set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "nexcat - Preprocessing Pipeline for Chip-Nexus data.")
   set (CPACK_DEBIAN_PACKAGE_MAINTAINER "Benjamin Menkuec")
   set (CPACK_PACKAGE_VENDOR "Charite Universitätsmedizin Berlin")
 

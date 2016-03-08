@@ -271,7 +271,7 @@ namespace ptc
                     return;
                 _item_available.wait();
             }
-            return true;
+            return;
         }
         bool try_retrieve(std::unique_ptr<TItem>& retrieve_item) noexcept {
             TItem* temp = nullptr;
@@ -338,7 +338,7 @@ namespace ptc
             while (true)
             {
                 if(try_retrieve(item))
-                    return true;
+                    return ;
                 _item_available.wait();
             }
         }
