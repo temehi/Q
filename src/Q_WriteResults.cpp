@@ -651,6 +651,7 @@ int writePlainShiftedExtendedReadsAndQfragsToBED(std::vector<Chromosome> &chromo
 	if(chr_idx==-1)
 	{
 		std::cout << "No matches for " << options.write_bed << "\n";
+		return 1; //abort function here
 	}
 	
 	// Calulate average fragment length from lower and upper bound
@@ -661,14 +662,15 @@ int writePlainShiftedExtendedReadsAndQfragsToBED(std::vector<Chromosome> &chromo
 	}
 	
 	// Get read length from first alignment in ChIP BAM file
-
-	// Get read length from first alignment in ChIP BAM file
     seqan::BamFileIn bamStreamInChIP;
     if(!open(bamStreamInChIP, toCString(options.chip_sample)))
     {
         std::cerr << "ERROR: Could not open " << options.chip_sample << " !\n";
         return 1;
     }
+    // Since seqan 2.0 we always need to read the bam headers first  
+    seqan::BamHeader header;
+    seqan::readHeader(header, bamStreamInChIP);
 	seqan::BamAlignmentRecord record;
 	readRecord(record, bamStreamInChIP);
 	int rl=length(record.seq);

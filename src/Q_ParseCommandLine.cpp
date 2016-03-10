@@ -1,4 +1,6 @@
 #include "Q_ParseCommandLine.h"
+#include <seqan/bam_io.h>
+
 
 /**
  * \brief Function which parses the command line arguments and stores
@@ -20,7 +22,8 @@ seqan::ArgumentParser::ParseResult parseCommandLine(Options &options, int argc, 
 	// Setup ArgumentParser
 	// --------------------
 	
-	seqan::ArgumentParser parser("Q");
+	seqan::ArgumentParser parser("QChIP");
+    setCategory(parser, "Chip Nexus Processing");
 	setShortDescription(parser, "Saturation based ChIP-seq peak caller");
 	setVersion(parser, "1.3.0");
 	setDate(parser, "January 2016");
@@ -37,12 +40,12 @@ seqan::ArgumentParser::ParseResult parseCommandLine(Options &options, int argc, 
 		"t", "treatment-sample", "Input file (REQUIRED).",
 		seqan::ArgParseArgument::INPUT_FILE, "IN"));
 	setRequired(parser, "t");
-	//setValidValues(parser, "treatment-sample", "sam bam");
+	setValidValues(parser, "treatment-sample", seqan::BamFileIn::getFileExtensions());
 
 	addOption(parser, seqan::ArgParseOption(
 		"c", "control-sample", "Input file.",
 		seqan::ArgParseArgument::INPUT_FILE, "IN"));
-	//setValidValues(parser, "control-sample", "sam bam");
+	setValidValues(parser, "control-sample", seqan::BamFileIn::getFileExtensions());
 
 	addOption(parser, seqan::ArgParseOption(
 		"l", "fragment-length-average", "The average length of fragments in the sequencing library of the treatment sample. If not given this value will be determined from the treatment data via binding characteristics.",
@@ -73,9 +76,8 @@ seqan::ArgumentParser::ParseResult parseCommandLine(Options &options, int argc, 
 	addSection(parser, "General Options");
 
 	addOption(parser, seqan::ArgParseOption(
-		"o", "out-prefix", "Prefix for all output files.",
-		seqan::ArgParseOption::OUTPUT_PREFIX, "STRING"));
-	setDefaultValue(parser, "o", "OUT");		
+		"o", "out-prefix", "Prefix for all output files. Default: use the treatment-sample filename prefix",
+		seqan::ArgParseOption::OUTPUT_PREFIX));
 	
 	addOption(parser, seqan::ArgParseOption(
 		"p", "thread-num", "Number of threads to use.",
@@ -111,10 +113,12 @@ seqan::ArgumentParser::ParseResult parseCommandLine(Options &options, int argc, 
 	addOption(parser, seqan::ArgParseOption(
 		"w", "write-bed", "Chromosome ID (e.g. chr1) must be consistent with ID in SAM/BAM file. If set, BED files for reads, shifted reads, extended reads and qfrags will be written for the given chromosome ID. Peak calling will be skipped.",
 		seqan::ArgParseArgument::STRING, "STRING"));
+	setDefaultValue(parser, "w", "None");
 
 	addOption(parser, seqan::ArgParseOption(
 		"b", "bed-hit-dist", "Input BED file containing summits. Summit position is always the center of a given region. Chromosome IDs in BED file must be consistent with IDs in SAM/BAM file. Default radius around summits is 1000. The radius can be changed via the -r option. Distribution of hits around summits on forward and reverse strand will be written to a text file. Output is a tab separated table containing three columns and 2 times radius rows. The first column contains the relative positions to the summits. The second and third column contain the accumulated counts of hits for all summits in the BED file. Second column for forward and third column for reverse strand. Peak calling will be skipped.",
 		seqan::ArgParseArgument::INPUT_FILE, "IN"));
+	setValidValues(parser, "bed-hit-dist", "bed");
 
 	addOption(parser, seqan::ArgParseOption(
 		"r", "bed-radius", "Radius around summits for counting hits (-b).",

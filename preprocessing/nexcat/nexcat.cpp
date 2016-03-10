@@ -80,6 +80,10 @@ seqan::ArgumentParser buildParser(void)
     addArgument(parser, fileArg);
     setHelpText(parser, 0, "SAM or BAM file");
 
+    seqan::ArgParseOption outputPrefix = seqan::ArgParseOption("o", "output-prefix", "Prefix for all output files.",
+        seqan::ArgParseOption::OUTPUT_PREFIX, "STRING");
+    addOption(parser, outputPrefix);
+
     seqan::ArgParseOption recordFilterCluster = seqan::ArgParseOption(
         "f", "cluster size", "Minimum number of mapped reads at the same position",
         seqan::ArgParseOption::INTEGER, "VALUE");
@@ -230,12 +234,17 @@ int main(int argc, char const * argv[])
 
     seqan::CharString fileName1, fileName2;
     getArgumentValue(fileName1, parser, 0, 0);
+    // use the first input-file as a default for outputPrefix option trimming the extension
+    std::string outputPrefix;
+    getOptionValue(outputPrefix, parser, "output-prefix");
+    if (!isSet(parser, "output-prefix"))
+        outputPrefix = getFilePrefix(seqan::toCString(fileName1));
 
     // Open input file, BamFileIn can read SAM and BAM files.
     seqan::BamFileIn bamFileIn(seqan::toCString(fileName1));
     
     std::string outFilename;
-    outFilename = getFilePrefix(seqan::toCString(fileName1)) + std::string("_filtered");
+    outFilename = outputPrefix + std::string("_filtered");
 
     const bool filter = seqan::isSet(parser, "f");
     const bool bedOutputEnabled = seqan::isSet(parser, "b");
@@ -298,7 +307,7 @@ int main(int argc, char const * argv[])
     {
         std::cout << "writing artifacts to file... ";
         auto t1 = std::chrono::steady_clock::now();
-        SaveBam<seqan::BamFileIn> saveArtifactsBam(header, bamFileIn, getFilePrefix(seqan::toCString(fileName1)) + "_artifacts");
+        SaveBam<seqan::BamFileIn> saveArtifactsBam(header, bamFileIn, outputPrefix + "_artifacts");
         for (auto element : artifacts)
             saveArtifactsBam.write(std::move(element));
         saveArtifactsBam.close();
@@ -306,7 +315,7 @@ int main(int argc, char const * argv[])
         std::cout << std::chrono::duration_cast<std::chrono::duration<float>>(t2 - t1).count() << "s" << std::endl;
     }
 
-    const std::string outFilename2 = getFilePrefix(seqan::toCString(fileName1)) + std::string("_filtered2");
+    const std::string outFilename2 = outputPrefix + std::string("_filtered2");
     if (filter)
     {
         t1 = std::chrono::steady_clock::now();
@@ -435,9 +444,9 @@ int main(int argc, char const * argv[])
 
     std::fstream fs2,fs3;
 #ifdef _MSC_VER
-    fs2.open(getFilePrefix(seqan::toCString(fileName1)) + "_duplication_rate_reads.txt", std::fstream::out, _SH_DENYNO);
+    fs2.open(outputPrefix + "_duplication_rate_reads.txt", std::fstream::out, _SH_DENYNO);
 #else
-    fs2.open(getFilePrefix(seqan::toCString(fileName1)) + "_duplication_rate_reads.txt", std::fstream::out);
+    fs2.open(outputPrefix + "_duplication_rate_reads.txt", std::fstream::out);
 #endif
     fs2 << "level" << "\t" << "unique" << "\t" << "non_unique" << "\t" << "SDL"
         << "\t" << "IMIBDL" << "\t" << "NUWRPOS"<< std::endl;
@@ -468,9 +477,9 @@ int main(int argc, char const * argv[])
 
     printStatistics(std::cout, stats, seqan::isSet(parser, "f"));
 #ifdef _MSV_VER
-    fs3.open(getFilePrefix(seqan::toCString(fileName1)) + "_nexcat_statistics.txt", std::fstream::out, _SH_DENYNO);
+    fs3.open(outputPrefix + "_nexcat_statistics.txt", std::fstream::out, _SH_DENYNO);
 #else
-    fs3.open(getFilePrefix(seqan::toCString(fileName1)) + "_nexcat_statistics.txt", std::fstream::out);
+    fs3.open(outputPrefix + "_nexcat_statistics.txt", std::fstream::out);
 #endif
     printStatistics(fs3, stats, seqan::isSet(parser, "f"), true);
     fs3 << "Command line\t";

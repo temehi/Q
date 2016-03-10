@@ -168,7 +168,7 @@ seqan_add_app_test (flexcat)
 # ----------------------------------------------------------------------------
 
 # Include executable flexcat in CTD structure.
-set (SEQAN_CTD_EXECUTABLES ${SEQAN_CTD_EXECUTABLES} ${KNIME_FLEX_NODES} CACHE INTERNAL "")
+# set (SEQAN_CTD_EXECUTABLES ${SEQAN_CTD_EXECUTABLES} ${KNIME_FLEX_NODES} CACHE INTERNAL "")
 
 # ----------------------------------------------------------------------------
 # CPack Install
