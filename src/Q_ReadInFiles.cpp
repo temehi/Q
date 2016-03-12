@@ -114,7 +114,7 @@ int ReadAlignmentFile(std::vector<Chromosome> &chromosome, int &chr_num, seqan::
             chromosome[record.rID].read_len_chip=length(record.seq);
         }
     }
-
+    close(bamStreamInChIP);
 
     // If there is a control,
     if(control_sample != "None")

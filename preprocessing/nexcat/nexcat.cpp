@@ -62,15 +62,12 @@ void printStatistics(TStream &stream, const Statistics &stats, const bool cluste
 
 seqan::ArgumentParser buildParser(void)
 {
-    seqan::ArgumentParser parser;
-
+    seqan::ArgumentParser parser("nexcat");
     setCategory(parser, "Chip Nexus Processing");
     setShortDescription(parser, "Preprocessing Pipeline for Chip-Nexus data");
     addUsageLine(parser, " \\fI<READ_FILE1>\\fP \\fI[OPTIONS]\\fP");
-    addDescription(parser,
-        "");
-
-    addDescription(parser, "");
+    addDescription(parser, "nexcat-Preprocessing Pipeline for Chip-Nexus data");
+    addDescription(parser, "(c) Copyright 2015 by Benjamin Menkuec.");
 
     seqan::setVersion(parser, SEQAN_APP_VERSION " [" SEQAN_REVISION "]");
     setDate(parser, SEQAN_DATE);
@@ -142,6 +139,7 @@ std::string getFilePrefix(const std::string& fileName, const bool withPath = tru
 template <typename TContext>
 struct SaveBam
 {
+    seqan::BamFileOut bamFileOut;
     SaveBam(const seqan::BamHeader header, TContext& context, const std::string& filename)
         : bamFileOut(static_cast<TContext>(context))
     {
@@ -160,7 +158,6 @@ struct SaveBam
     {
         seqan::close(bamFileOut);
     }
-    seqan::BamFileOut bamFileOut;
 };
 
 typedef std::map<BamRecordKey<WithBarcode>, unsigned int> OccurenceMap;
@@ -210,6 +207,7 @@ void processBamFile(seqan::BamFileIn& bamFileIn, const TArtifactWriter& artifact
             bamWriter(std::move(record));
         }
     }
+    close(bamFileIn);
 }
 
 int main(int argc, char const * argv[])
@@ -242,7 +240,6 @@ int main(int argc, char const * argv[])
 
     // Open input file, BamFileIn can read SAM and BAM files.
     seqan::BamFileIn bamFileIn(seqan::toCString(fileName1));
-    
     std::string outFilename;
     outFilename = outputPrefix + std::string("_filtered");
 
@@ -337,6 +334,7 @@ int main(int argc, char const * argv[])
             }
         }
         saveBam2.close();
+        close(bamFileIn2);
 
         t2 = std::chrono::steady_clock::now();
         std::cout << std::chrono::duration_cast<std::chrono::duration<float>>(t2 - t1).count() << "s" << std::endl;
@@ -441,7 +439,7 @@ int main(int argc, char const * argv[])
     std::cout<<"done"<<std::endl;
     saveBedForwardStrand.close();
     saveBedReverseStrand.close();
-
+    close(bamFileIn);
     std::fstream fs2,fs3;
 #ifdef _MSC_VER
     fs2.open(outputPrefix + "_duplication_rate_reads.txt", std::fstream::out, _SH_DENYNO);
@@ -467,6 +465,7 @@ int main(int argc, char const * argv[])
         sumUniqueReads += duplicationRateUnique[i] * (i + 1);
         sumNonUniqueReads += duplicationRate[i] * (i+1);
     }
+    fs2.close();
     assert(sumUniqueReads == stats.totalMappedReads - stats.removedReads);
     assert(stats.totalReads == stats.couldNotMap + stats.couldNotMapUniquely + stats.totalMappedReads + stats.filteredReads);
     assert(sumNonUniqueReads == stats.removedReads);

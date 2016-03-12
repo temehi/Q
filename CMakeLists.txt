@@ -22,6 +22,11 @@ set (CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/include/seqan/util/cmake/FindTBB
     ${CMAKE_CURRENT_SOURCE_DIR}/include/seqan/util/cmake
     ${CMAKE_MODULE_PATH})
+    
+set (CTD_PLUGIN_PACKAGE "de.seqan.qnexus")
+set (CTD_PLUGIN_NAME "QNexus")
+set (CTD_REPO_SUB_FOLDER "Seqan")
+
 include (SeqAnContribs)
 
 # Build in release mode by default

@@ -678,7 +678,7 @@ int writePlainShiftedExtendedReadsAndQfragsToBED(std::vector<Chromosome> &chromo
 	{
 		std::cout << "\tRead length: " << rl << "\n";
 	}
-	
+	close(bamStreamInChIP);
 	// Create names for for output files from outprefix
 	seqan::CharString out_matched_reads=options.out_prefix;
 	append(out_matched_reads,"-matched-reads");
