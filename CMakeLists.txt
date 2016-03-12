@@ -23,10 +23,6 @@ set (CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/include/seqan/util/cmake
     ${CMAKE_MODULE_PATH})
     
-set (CTD_PLUGIN_PACKAGE "de.seqan.qnexus")
-set (CTD_PLUGIN_NAME "QNexus")
-set (CTD_REPO_SUB_FOLDER "Seqan")
-
 include (SeqAnContribs)
 
 # Build in release mode by default
@@ -61,6 +57,10 @@ add_subdirectory(preprocessing)
 
 # message (STATUS "${ColourBold}Configuring QChIP Tests...${ColourReset}")
 # add_subdirectory(tests)
+
+set (CTD_PLUGIN_PACKAGE "de.seqan.qnexus")
+set (CTD_PLUGIN_NAME "QNexus")
+# set (CTD_REPO_SUB_FOLDER "Seqan")
 
 set (CMAKE_SOURCE_DIR
     ${SEQAN_ROOT_SOURCE_DIR})
