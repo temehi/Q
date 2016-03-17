@@ -63,8 +63,8 @@ void printStatistics(TStream &stream, const Statistics &stats, const bool cluste
 seqan::ArgumentParser buildParser(void)
 {
     seqan::ArgumentParser parser("nexcat");
-    setCategory(parser, "Chip Nexus Processing");
-    setShortDescription(parser, "Preprocessing Pipeline for Chip-Nexus data");
+    setCategory(parser, "ChIP Peak Calling");
+    setShortDescription(parser, "Preprocessing Pipeline for ChIP-Seq/ChIP-Nexus data");
     addUsageLine(parser, " \\fI<READ_FILE1>\\fP \\fI[OPTIONS]\\fP");
     addDescription(parser, "nexcat-Preprocessing Pipeline for Chip-Nexus data");
     addDescription(parser, "(c) Copyright 2015 by Benjamin Menkuec.");

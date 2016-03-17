@@ -23,7 +23,7 @@ seqan::ArgumentParser::ParseResult parseCommandLine(Options &options, int argc, 
 	// --------------------
 	
 	seqan::ArgumentParser parser("QChIP");
-    setCategory(parser, "Chip Nexus Processing");
+    setCategory(parser, "ChIP Peak Calling");
 	setShortDescription(parser, "Saturation based ChIP-seq peak caller");
 	setVersion(parser, "1.3.0");
 	setDate(parser, "January 2016");

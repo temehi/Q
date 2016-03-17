@@ -446,7 +446,7 @@ namespace ptc
                 const bool eof = _eof.load(std::memory_order_acquire);
                 if (!_slots.try_retrieve(returnItem))
                     if (!eof)
-                        wait();
+                        this->wait();
                     else
                         return false;
                 else
@@ -522,7 +522,7 @@ namespace ptc
                     else if(std::is_same<TOrderPolicy, OrderPolicy::Unordered>::value || 
                         std::is_same<TOrderPolicy, OrderPolicy::Unordered_use_queue>::value || 
                         itemBuffer.empty())
-                        wait();
+                        this->wait();
                 }
             });
         }

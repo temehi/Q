@@ -58,9 +58,8 @@ add_subdirectory(preprocessing)
 # message (STATUS "${ColourBold}Configuring QChIP Tests...${ColourReset}")
 # add_subdirectory(tests)
 
-set (CTD_PLUGIN_PACKAGE "de.seqan.qnexus")
-set (CTD_PLUGIN_NAME "QNexus")
-# set (CTD_REPO_SUB_FOLDER "Seqan")
+set (CTD_PLUGIN_PACKAGE "de.seqan.qchip")
+set (CTD_PLUGIN_NAME "QChip")
 
 set (CMAKE_SOURCE_DIR
     ${SEQAN_ROOT_SOURCE_DIR})
