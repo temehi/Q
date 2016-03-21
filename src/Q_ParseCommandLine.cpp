@@ -34,6 +34,7 @@ seqan::ArgumentParser::ParseResult parseCommandLine(Options &options, int argc, 
 	// Define options
 	// --------------
 
+
 	addSection(parser, "Peak Calling Options");
 	
 	addOption(parser, seqan::ArgParseOption(
@@ -51,11 +52,15 @@ seqan::ArgumentParser::ParseResult parseCommandLine(Options &options, int argc, 
 		"l", "fragment-length-average", "The average length of fragments in the sequencing library of the treatment sample. If not given this value will be determined from the treatment data via binding characteristics.",
 	seqan::ArgParseArgument::INTEGER, "INT"));
 	setDefaultValue(parser, "l", -1);
+	setMinValue(parser, "l", "-1");
+	setMaxValue(parser, "l", "500");
 
 	addOption(parser, seqan::ArgParseOption(
 		"x", "fragment-length-deviation", "The deviation of lengths of fragments in the sequencing library.",
 	seqan::ArgParseArgument::INTEGER, "INT"));
 	setDefaultValue(parser, "x", 50);
+	setMinValue(parser, "x", "1");
+	setMaxValue(parser, "x", "500");
 
 	addOption(parser, seqan::ArgParseOption(
 		"k", "keep-dup", "If set, duplicate reads will be kept."));
@@ -64,15 +69,19 @@ seqan::ArgumentParser::ParseResult parseCommandLine(Options &options, int argc, 
 		"n", "top-n", "Maximum number of top peaks to be written to file.",
 	seqan::ArgParseArgument::INTEGER, "INT"));
 	setDefaultValue(parser, "n", 100000);
+	setMinValue(parser, "n", "1");
+	setMaxValue(parser, "n", "100000000");
 	
 	addOption(parser, seqan::ArgParseOption(
 		"pc", "p-value-cutoff", "Cutoff for the negative decadic logarithm of the adjusted p-values (i.e. 6 means 1e-06). Overrides --top-n.",
 		seqan::ArgParseArgument::DOUBLE, "DOUBLE"));
 	setDefaultValue(parser, "pc", -1);
+	setMinValue(parser, "pc", "-1");
+	setMaxValue(parser, "pc", "20000");
 
 	addOption(parser, seqan::ArgParseOption(
 		"nm", "nexus-mode", "If set, appropriate settings for ChIP-nexus will be used. Duplicate reads will be kept. If not set, the fragment length l will be estimated using the qfrag-length-distribution method and x will be set to 5."));
-		
+
 	addSection(parser, "General Options");
 
 	addOption(parser, seqan::ArgParseOption(
@@ -83,6 +92,8 @@ seqan::ArgumentParser::ParseResult parseCommandLine(Options &options, int argc, 
 		"p", "thread-num", "Number of threads to use.",
 		seqan::ArgParseArgument::INTEGER, "INT"));
 	setDefaultValue(parser, "p", 1);
+	setMinValue(parser, "p", "1");
+	setMaxValue(parser, "p", "64");
 			
 	addOption(parser, seqan::ArgParseOption(
 		"v", "verbose", "If set, information will be written to the screen."));
@@ -93,6 +104,8 @@ seqan::ArgumentParser::ParseResult parseCommandLine(Options &options, int argc, 
 		"s", "step-num", "Number of strand shifts for the determination of the average fragment length.",
 		seqan::ArgParseArgument::INTEGER, "INT"));
 	setDefaultValue(parser, "s", 1000);
+	setMinValue(parser, "s", "10");
+	setMaxValue(parser, "s", "10000");
 	
 	addOption(parser, seqan::ArgParseOption(
 		"bco", "binding-characteristics-only", "If set, only the binding characteristics will be determined and peak calling will be skipped."));
@@ -124,6 +137,8 @@ seqan::ArgumentParser::ParseResult parseCommandLine(Options &options, int argc, 
 		"r", "bed-radius", "Radius around summits for counting hits (-b).",
 		seqan::ArgParseArgument::INTEGER, "INT"));
 	setDefaultValue(parser, "r", 1000);		
+	setMinValue(parser, "r", "2");
+	setMaxValue(parser, "r", "10000");
 
 	addOption(parser, seqan::ArgParseOption(
 		"psc", "use-pseudo-control", "If set, a pseudo control will be generated from the treatment data, by switching the strand of each read and shifting the 5' end towards 3' direction by one read length."));

@@ -122,9 +122,22 @@ int getFragLength(std::vector<Chromosome> &chromosome, int step_num, int thread_
 	
 	// write R-script that generates a plot
 	std::string R_out = out_prefix + "-Q-binding-characteristics.R";
-	std::string PDF_out = out_prefix + "-Q-binding-characteristics.pdf";
 	std::ofstream OUT;
 	OUT.open(R_out.c_str());
+
+	OUT << "thisFile <- function() {\n"
+"    	 cmdArgs <- commandArgs(trailingOnly = FALSE)\n"
+"        needle <- \"--file=\"\n"
+"        match <- grep(needle, cmdArgs)\n"
+"        if (length(match) > 0) {\n"
+"                # Rscript\n"
+"                return(normalizePath(gsub('~\\\\+~',\" \",sub(needle, \"\", cmdArgs[match]))))\n"
+"        } else {\n"
+"                # 'source'd via R console\n"
+"                return(sys.frame(tail(grep('source',sys.calls()),n=1))$ofile)\n"
+"        }\n"
+"}\n"
+"PDF.Name<-paste(sub(\"^([^.]*).*\", \"\\\\1\", thisFile()), \".pdf\", sep = \"\", collapse = NULL)\n";
 	
 	OUT << "HD<-c(";
 	for(int step=0;step<step_num;step++)
@@ -155,7 +168,7 @@ int getFragLength(std::vector<Chromosome> &chromosome, int step_num, int thread_
 	OUT << "MAIN_PLOT<-paste(\"FL = \",FL,\"|\")"      << "\n";
 	OUT << "MAIN_PLOT<-paste(MAIN_PLOT,\"RSC = \",RSC)"      << "\n";	
 		
-	OUT << "pdf(\"" << PDF_out << "\",height=7,width=7)" << "\n";
+	OUT << "pdf(PDF.Name, height=7,width=7)" << "\n";
 	OUT << "plot(STRAND_SHIFT,HD,xlab=\"strand shift\",ylab=\"hamming distance\",type=\"l\",main=MAIN_PLOT,cex.axis=1.3,cex.lab=1.5)"               << "\n";
 	
 	OUT << "abline(";
@@ -303,6 +316,20 @@ int getQfragLengthDistribution(std::vector<Chromosome> &chromosome, int step_num
 	std::ofstream OUT;
 	
 	OUT.open(R_out.c_str());
+	OUT << "thisFile <- function() {\n"
+"    	 cmdArgs <- commandArgs(trailingOnly = FALSE)\n"
+"        needle <- \"--file=\"\n"
+"        match <- grep(needle, cmdArgs)\n"
+"        if (length(match) > 0) {\n"
+"                # Rscript\n"
+"                return(normalizePath(gsub('~\\\\+~',\" \",sub(needle, \"\", cmdArgs[match]))))\n"
+"        } else {\n"
+"                # 'source'd via R console\n"
+"                return(sys.frame(tail(grep('source',sys.calls()),n=1))$ofile)\n"
+"        }\n"
+"}\n"
+"PDF.Name<-paste(sub(\"^([^.]*).*\", \"\\\\1\", thisFile()), \".pdf\", sep = \"\", collapse = NULL)\n";
+	
 
 	OUT << "QLD_CHIP<-c(";
 	for(int step=2;step<step_num;step++)
@@ -337,7 +364,7 @@ int getQfragLengthDistribution(std::vector<Chromosome> &chromosome, int step_num
 	OUT << "YMIN<-min(c(QLD_CHIP,QLD_CTRL))\n\n";
 
 
-	OUT << "pdf(\"" << PDF_out << "\",height=3.4,width=6)" << "\n";
+	OUT << "pdf(PDF.Name,height=3.4,width=6)" << "\n";
 	OUT << "par(mfrow=c(1,2))" << "\n";
 
 	OUT << "QL_MAX<-Q_LENGTH[which(max(QLD_CHIP)==QLD_CHIP)]" << "\n";
