@@ -63,7 +63,7 @@ class FilteringParserBuilder : public ArgumentParserBuilder
 public:
     seqan::ArgumentParser build() override
     {
-        seqan::ArgumentParser parser("sflexFilter");
+        seqan::ArgumentParser parser("flexcatFilter");
         addHeader(parser);
         addGeneralOptions(parser, FlexiProgram::FILTERING);
         addFilteringOptions(parser);
@@ -78,7 +78,7 @@ class AdapterRemovalParserBuilder : public ArgumentParserBuilder
 public:
     seqan::ArgumentParser build() override
     {
-        seqan::ArgumentParser parser("sflexAR");
+        seqan::ArgumentParser parser("flexcatAR");
         addHeader(parser);
         addGeneralOptions(parser, FlexiProgram::ADAPTER_REMOVAL);
         addAdapterTrimmingOptions(parser, FlexiProgram::ADAPTER_REMOVAL);
@@ -94,7 +94,7 @@ class DemultiplexingParserBuilder : public ArgumentParserBuilder
 public:
     seqan::ArgumentParser build() override
     {
-        seqan::ArgumentParser parser("sflexDMulti");
+        seqan::ArgumentParser parser("flexcatDMulti");
         addHeader(parser);
         addGeneralOptions(parser, FlexiProgram::DEMULTIPLEXING);
         addDemultiplexingOptions(parser);
@@ -110,7 +110,7 @@ class QualityControlParserBuilder : public ArgumentParserBuilder
 public:
     seqan::ArgumentParser build() override
     {
-        seqan::ArgumentParser parser("sflexQC");
+        seqan::ArgumentParser parser("flexcatQC");
         addHeader(parser);
         addGeneralOptions(parser, FlexiProgram::QUALITY_CONTROL);
         addReadTrimmingOptions(parser, FlexiProgram::QUALITY_CONTROL);
@@ -260,7 +260,7 @@ void ArgumentParserBuilder::addGeneralOptions(seqan::ArgumentParser & parser, co
     seqan::ArgParseOption finLenOpt = seqan::ArgParseOption(
         "fl", "finalLength", "Trims reads to desired length after the complete workflow.",
         seqan::ArgParseArgument::INTEGER, "LENGTH");
-    setDefaultValue(finLenOpt, 0);
+    setDefaultValue(finLenOpt, 1);
     setMinValue(finLenOpt, "1");
     addOption(parser, finLenOpt);
 }
