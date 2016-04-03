@@ -621,11 +621,21 @@ int flexcatMain(const FlexiProgram flexiProgram, int argc, char const ** argv)
     getArgumentValue(filename1, parser, 0, 0);
 
     bool useDefault = false;
+
     if (output == "")
     {
         output = filename1;
         useDefault = true;
     }
+    std::cout << "filename1 set to: " <<filename1 <<"\n";
+    std::string o = seqan::toCString(output);
+    if (o.find("knime_fs") !=  std::string::npos)
+    {
+        output += getArgumentFileExtension(parser, 0, 0);
+        useDefault = true;
+    }
+
+    std::cout << "Output-path was set to: " <<output <<"\n";
 
     OutputStreams outputStreams(seqan::toCString(output), noQuality);
 

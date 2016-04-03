@@ -260,8 +260,8 @@ void ArgumentParserBuilder::addGeneralOptions(seqan::ArgumentParser & parser, co
     seqan::ArgParseOption finLenOpt = seqan::ArgParseOption(
         "fl", "finalLength", "Trims reads to desired length after the complete workflow.",
         seqan::ArgParseArgument::INTEGER, "LENGTH");
-    setDefaultValue(finLenOpt, 1);
-    setMinValue(finLenOpt, "1");
+    setDefaultValue(finLenOpt, 0);
+    setMinValue(finLenOpt, "0");
     addOption(parser, finLenOpt);
 }
 

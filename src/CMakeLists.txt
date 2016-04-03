@@ -6,16 +6,15 @@
 # CMakeLists.txt file for QChIP.
 # ===========================================================================
 
-
 # ----------------------------------------------------------------------------
 # Dependencies
 # ----------------------------------------------------------------------------
 # Search SeqAn and select dependencies.
-find_package(ZLIB)
-find_package(BZip2)
 find_package(SeqAn REQUIRED)
 find_package (OpenMP)
 find_package (Boost)
+find_package(ZLIB)
+find_package(BZip2)
 
 
 if (NOT CXX11_FOUND)
@@ -89,6 +88,8 @@ add_definitions (-DSEQAN_REVISION="${SEQAN_REVISION}")
 add_definitions (-DSEQAN_DATE="${SEQAN_DATE}")
 add_definitions (-DSEQAN_APP_VERSION="${SEQAN_APP_VERSION}")
 
+seqan_register_apps ()
+
 # Update the list of file names below if you add source files to your application.
 add_executable(QChIP    Q.cpp
                         Q_DetectSignals.cpp
@@ -106,10 +107,8 @@ add_executable(QChIP    Q.cpp
                         Q_WriteResults.cpp
                         Q_WriteResults.h)
 
-
-
 # Add dependencies found by find_package (SeqAn).
-target_link_libraries (QChIP ${SEQAN_LIBRARIES})
+target_link_libraries (QChIP ${SEQAN_LIBRARIES} )
 
 # Add CXX flags found by find_package (SeqAn).
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SEQAN_CXX_FLAGS}")

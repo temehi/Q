@@ -21,6 +21,4 @@ find_package (CXX14 REQUIRED)
 # Add Preprocessing targets
 # ----------------------------------------------------------------------------
 
-add_subdirectory(flexcat)
-
-add_subdirectory(nexcat)
+seqan_register_apps ()

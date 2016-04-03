@@ -136,7 +136,7 @@ public:
                 }
                 else
                 {
-                    addStream(file+".fq", streamIndex);
+                    addStream(file, streamIndex);
                 }
             }
         }
