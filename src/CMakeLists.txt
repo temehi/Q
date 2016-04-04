@@ -10,11 +10,11 @@
 # Dependencies
 # ----------------------------------------------------------------------------
 # Search SeqAn and select dependencies.
+find_package(ZLIB)
+find_package(BZip2)
 find_package(SeqAn REQUIRED)
 find_package (OpenMP)
 find_package (Boost)
-find_package(ZLIB)
-find_package(BZip2)
 
 
 if (NOT CXX11_FOUND)
